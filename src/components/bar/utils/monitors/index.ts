@@ -68,6 +68,16 @@ const _getResolveLayoutForMonitor = (monitor: number, layouts: BarLayouts): [str
     const hyprlandService = AstalHyprland.get_default();
     const mon = hyprlandService.get_monitor(monitor);
     if (!mon) {
+        // Monitor not available - try to match by number from config instead of using hardcoded defaults
+        const matchingNum = Object.keys(layouts).find((key) => key === monitor.toString());
+        if (matchingNum !== undefined) {
+            return [matchingNum, layouts[matchingNum]];
+        }
+        const wildcard = Object.keys(layouts).find((key) => key === '*');
+        if (wildcard) {
+            return [wildcard, layouts[wildcard]];
+        }
+        // Only use defaults if no config exists at all
         return [
             'default',
             {

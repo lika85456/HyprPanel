@@ -23,6 +23,7 @@ export class ConfigManager {
     private readonly _changeCallbacks: Array<() => void> = [];
     private _fileMonitor: Gio.FileMonitor | null = null;
     private _lastChangeTime = 0;
+    private _isReadOnly: boolean = false;
 
     /**
      * Creates a new configuration manager for a specific config file
@@ -32,7 +33,21 @@ export class ConfigManager {
     constructor(configPath: string) {
         this._configPath = configPath;
         this._createConfigDirectory();
+        this._checkWritability();
         this._startConfigMonitoring();
+    }
+
+    private _checkWritability(): void {
+        const file = Gio.File.new_for_path(this._configPath);
+        try {
+            const info = file.query_info('access::can-write', Gio.FileQueryInfoFlags.NONE, null);
+            this._isReadOnly = !info.get_attribute_boolean('access::can-write');
+            if (this._isReadOnly) {
+                console.log(`[ConfigManager] Config file is read-only: ${this._configPath}`);
+            }
+        } catch {
+            this._isReadOnly = false;
+        }
     }
 
     /**
@@ -72,11 +87,14 @@ export class ConfigManager {
     }
 
     /**
-     * Writes configuration to disk
+     * Writes configuration to disk (no-op if file is read-only)
      *
      * @param config - The configuration object to save
      */
     public writeConfig(config: Record<string, unknown>): void {
+        if (this._isReadOnly) {
+            return;
+        }
         writeFile(this._configPath, JSON.stringify(config, null, 2));
     }
 
@@ -103,8 +121,12 @@ export class ConfigManager {
 
     /**
      * Sets up file monitoring to detect external changes to the config file
+     * Skipped for read-only configs since they cannot change
      */
     private _startConfigMonitoring(): void {
+        if (this._isReadOnly) {
+            return;
+        }
         this._createFileMonitor();
         this._overrideWriteConfigForMonitoring();
     }
