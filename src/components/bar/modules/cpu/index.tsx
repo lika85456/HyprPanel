@@ -1,11 +1,11 @@
 import { Module } from '../../shared/module';
 import { bind, Variable } from 'astal';
-import { Astal } from 'astal/gtk3';
+import { Astal, Gtk } from 'astal/gtk3';
 import { BarBoxChild } from 'src/components/bar/types';
 import options from 'src/configuration';
 import { InputHandlerService } from '../../utils/input/inputHandler';
 import CpuUsageService from 'src/services/system/cpuUsage';
-
+import { useHook } from 'src/lib/shared/hookHandler';
 const inputHandler = InputHandlerService.getInstance();
 
 const {
@@ -19,19 +19,57 @@ const {
     scrollDown,
     pollingInterval,
     icon,
+    colorLow,
+    colorMedium,
+    colorHigh,
 } = options.bar.customModules.cpu;
 
 const cpuService = new CpuUsageService({ frequency: pollingInterval });
+
+const applyCssColor = (widget: Gtk.Widget, color: string): void => {
+    const cssValue = color?.trim().length ? `color: ${color};` : '';
+    (widget as Gtk.Widget & { css?: string }).css = cssValue;
+};
 
 export const Cpu = (): BarBoxChild => {
     cpuService.initialize();
 
     const labelBinding = Variable.derive(
         [bind(cpuService.cpu), bind(round)],
-        (cpuUsg: number, round: boolean) => {
-            return round ? `${Math.round(cpuUsg)}%` : `${cpuUsg.toFixed(2)}%`;
+        (cpuUsg: number, shouldRound: boolean) => {
+            return shouldRound ? `${Math.round(cpuUsg)}%` : `${cpuUsg.toFixed(2)}%`;
         },
     );
+    const colorBinding = Variable.derive(
+        [bind(cpuService.cpu), bind(colorLow), bind(colorMedium), bind(colorHigh)],
+        (cpuUsg: number, low: string, medium: string, high: string) => {
+            if (cpuUsg < 70) {
+                return low;
+            }
+
+            if (cpuUsg < 90) {
+                return medium;
+            }
+
+            return high;
+        },
+    );
+
+    const createColorHook = () => {
+        return (widget: Gtk.Widget): void => {
+            useHook(widget, colorBinding, () => {
+                const updateColor = (): void => {
+                    applyCssColor(widget, colorBinding.get());
+                };
+
+                updateColor();
+
+                return () => {
+                    applyCssColor(widget, '');
+                };
+            });
+        };
+    };
 
     const tooltipBinding = Variable.derive(
         [bind(cpuService.cpu), bind(cpuService.perCoreUsage), bind(round), bind(showPerCoreUsage)],
@@ -62,6 +100,8 @@ export const Cpu = (): BarBoxChild => {
         tooltipText: tooltipBinding(),
         boxClass: 'cpu',
         showLabelBinding: bind(label),
+        textIconHook: createColorHook(),
+        labelHook: createColorHook(),
         props: {
             setup: (self: Astal.Button) => {
                 inputHandlerBindings = inputHandler.attachHandlers(self, {
@@ -86,6 +126,7 @@ export const Cpu = (): BarBoxChild => {
                 inputHandlerBindings.drop();
                 labelBinding.drop();
                 tooltipBinding.drop();
+                colorBinding.drop();
                 cpuService.destroy();
             },
         },
