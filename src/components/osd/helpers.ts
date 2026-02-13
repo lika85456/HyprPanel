@@ -5,6 +5,7 @@ import AstalWp from 'gi://AstalWp?version=0.1';
 import options from 'src/configuration';
 import { GdkMonitorService } from 'src/services/display/monitor';
 import BrightnessService from 'src/services/system/brightness';
+import { isReadonlyMode } from 'src/lib/session';
 import { OsdRevealerController } from './revealer/revealerController';
 
 const wireplumber = AstalWp.get_default() as AstalWp.Wp;
@@ -24,6 +25,12 @@ const osdController = OsdRevealerController.getInstance();
  */
 export const getOsdMonitor = (): Variable<number> => {
     const gdkMonitorMapper = GdkMonitorService.getInstance();
+
+    if (isReadonlyMode()) {
+        return Variable.derive([bind(monitor)], (defaultMonitor) => {
+            return gdkMonitorMapper.mapHyprlandToGdk(defaultMonitor);
+        });
+    }
 
     return Variable.derive(
         [bind(hyprlandService, 'focusedMonitor'), bind(monitor), bind(active_monitor)],

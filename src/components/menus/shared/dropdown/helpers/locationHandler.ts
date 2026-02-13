@@ -1,5 +1,6 @@
 import options from 'src/configuration';
 import { globalEventBoxes } from 'src/lib/events/dropdown';
+import { isReadonlyMode } from 'src/lib/session';
 import { GLib } from 'astal';
 import { EventBox } from 'astal/gtk3/widget';
 import AstalHyprland from 'gi://AstalHyprland?version=0.1';
@@ -25,6 +26,7 @@ function getDropdownEventBox(windowName: string): EventBox | undefined {
  */
 function getFocusedHyprlandMonitor(): AstalHyprland.Monitor | undefined {
     const allMonitors = hyprlandService.get_monitors();
+    if (isReadonlyMode()) return allMonitors[0];
     const focusedMonitor = hyprlandService.focusedMonitor;
     if (!focusedMonitor) return undefined;
     return allMonitors.find((monitor) => monitor.id === focusedMonitor.id);

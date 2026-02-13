@@ -2,6 +2,7 @@ import { bind, timeout, Variable } from 'astal';
 import AstalNotifd from 'gi://AstalNotifd?version=0.1';
 import options from 'src/configuration';
 import { isNotificationIgnored } from 'src/lib/shared/notifications';
+import { isReadonlyMode } from 'src/lib/session';
 import AstalHyprland from 'gi://AstalHyprland?version=0.1';
 import GLib from 'gi://GLib';
 
@@ -30,6 +31,8 @@ export const notifHasImg = (notification: AstalNotifd.Notification): boolean => 
  * @param curMonitor - Variable that will be updated with the current monitor ID (defaults to 0 if no monitor is focused)
  */
 export const trackActiveMonitor = (curMonitor: Variable<number>): void => {
+    if (isReadonlyMode()) return;
+
     Variable.derive([bind(hyprlandService, 'focusedMonitor')], (monitor) => {
         if (monitor?.id === undefined) {
             console.warn('No focused monitor available, defaulting to monitor 0');

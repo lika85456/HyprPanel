@@ -6,6 +6,7 @@ import AstalNotifd from 'gi://AstalNotifd?version=0.1';
 import AstalHyprland from 'gi://AstalHyprland?version=0.1';
 import { GdkMonitorService } from 'src/services/display/monitor/index.js';
 import { getPosition } from 'src/lib/window/positioning.js';
+import { isReadonlyMode } from 'src/lib/session';
 import { NotificationCard } from './Notification';
 import { App } from 'astal/gtk3';
 
@@ -25,18 +26,21 @@ export default (): JSX.Element => {
 
     const windowLayer = bind(tear).as((tear) => (tear ? Astal.Layer.TOP : Astal.Layer.OVERLAY));
     const windowAnchor = bind(position).as(getPosition);
-    const windowMonitor = Variable.derive(
-        [bind(hyprlandService, 'focusedMonitor'), bind(monitor), bind(active_monitor)],
-        (focusedMonitor, monitor, activeMonitor) => {
-            if (activeMonitor === true && focusedMonitor) {
-                const gdkMonitor = gdkMonitorMapper.mapHyprlandToGdk(focusedMonitor.id);
-                return gdkMonitor;
-            }
 
-            const gdkMonitor = gdkMonitorMapper.mapHyprlandToGdk(monitor);
-            return gdkMonitor;
-        },
-    );
+    const windowMonitor = isReadonlyMode()
+        ? Variable.derive([bind(monitor)], (monitor) => gdkMonitorMapper.mapHyprlandToGdk(monitor))
+        : Variable.derive(
+              [bind(hyprlandService, 'focusedMonitor'), bind(monitor), bind(active_monitor)],
+              (focusedMonitor, monitor, activeMonitor) => {
+                  if (activeMonitor === true && focusedMonitor) {
+                      const gdkMonitor = gdkMonitorMapper.mapHyprlandToGdk(focusedMonitor.id);
+                      return gdkMonitor;
+                  }
+
+                  const gdkMonitor = gdkMonitorMapper.mapHyprlandToGdk(monitor);
+                  return gdkMonitor;
+              },
+          );
 
     const notificationsBinding = Variable.derive(
         [bind(popupNotifications), bind(showActionsOnHover)],
