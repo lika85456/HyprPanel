@@ -25,7 +25,9 @@ function getDropdownEventBox(windowName: string): EventBox | undefined {
  */
 function getFocusedHyprlandMonitor(): AstalHyprland.Monitor | undefined {
     const allMonitors = hyprlandService.get_monitors();
-    return allMonitors.find((monitor) => monitor.id === hyprlandService.focusedMonitor.id);
+    const focusedMonitor = hyprlandService.focusedMonitor;
+    if (!focusedMonitor) return undefined;
+    return allMonitors.find((monitor) => monitor.id === focusedMonitor.id);
 }
 
 /**

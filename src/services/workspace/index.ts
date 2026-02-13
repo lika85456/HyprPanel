@@ -218,11 +218,14 @@ export class WorkspaceService {
      * @param ignoredWorkspacesVariable - A Variable that contains the ignored workspaces pattern.
      */
     private _navigateWorkspace(direction: 'next' | 'prev'): void {
+        const focusedMonitor = hyprlandService.focusedMonitor;
+        if (!focusedMonitor) return;
+
         const allHyprlandWorkspaces = hyprlandService.get_workspaces() ?? [];
 
         const activeWorkspaceIds = allHyprlandWorkspaces
             .filter(
-                (workspaceInstance) => hyprlandService.focusedMonitor.id === workspaceInstance.monitor?.id,
+                (workspaceInstance) => focusedMonitor.id === workspaceInstance.monitor?.id,
             )
             .map((workspaceInstance) => workspaceInstance.id);
 
