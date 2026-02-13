@@ -54,20 +54,30 @@ export class WorkspaceService {
         isMonitorSpecific: boolean,
         hyprlandMonitorInstances: AstalHyprland.Monitor[],
     ): number[] {
+        if (!hyprlandMonitorInstances || hyprlandMonitorInstances.length === 0) {
+            return range(totalWorkspaces || 8).filter((ws) => !this._isWorkspaceIgnored(ws));
+        }
+
         let allPotentialWorkspaces = range(totalWorkspaces || 8);
         const allWorkspaceInstances = workspaceInstances ?? [];
 
         const activeWorkspaceIds = allWorkspaceInstances.map((workspaceInstance) => workspaceInstance.id);
 
         const monitorReferencesForActiveWorkspaces = allWorkspaceInstances.map((workspaceInstance) => {
-            return {
-                id: workspaceInstance.monitor?.id ?? -1,
-                name: workspaceInstance.monitor?.name ?? '',
-            };
+            try {
+                return {
+                    id: workspaceInstance.monitor?.id ?? -1,
+                    name: workspaceInstance.monitor?.name ?? '',
+                };
+            } catch {
+                return { id: -1, name: '' };
+            }
         });
 
         const currentMonitorInstance =
-            hyprlandMonitorInstances.find((monitorObj) => monitorObj.id === monitorId) ||
+            hyprlandMonitorInstances.find((monitorObj) => {
+                try { return monitorObj?.id === monitorId; } catch { return false; }
+            }) ||
             monitorReferencesForActiveWorkspaces.find((monitorObj) => monitorObj.id === monitorId);
 
         const allWorkspacesWithRules = Object.keys(workspaceMonitorRules).reduce(
@@ -83,7 +93,11 @@ export class WorkspaceService {
             );
 
             if (metadataForWorkspace) {
-                return metadataForWorkspace?.monitor?.id === monitorId;
+                try {
+                    return metadataForWorkspace?.monitor?.id === monitorId;
+                } catch {
+                    return false;
+                }
             }
 
             if (
