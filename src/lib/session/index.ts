@@ -10,6 +10,10 @@ declare global {
     const SRC_DIR: string;
 }
 
+export function isReadonlyMode(): boolean {
+    return GLib.getenv('HYPRPANEL_READONLY_MODE') === '1';
+}
+
 export function ensureDirectory(path: string): void {
     if (!GLib.file_test(path, GLib.FileTest.EXISTS)) {
         Gio.File.new_for_path(path).make_directory_with_parents(null);

@@ -1,5 +1,5 @@
 import { readFile, writeFile, monitorFile, Gio } from 'astal/file';
-import { ensureDirectory } from '../../session';
+import { ensureDirectory, isReadonlyMode } from '../../session';
 import icons from '../../icons/icons';
 import { errorHandler } from 'src/core/errors/handler';
 import { SystemUtilities } from 'src/core/system/SystemUtilities';
@@ -105,6 +105,7 @@ export class ConfigManager {
      * Sets up file monitoring to detect external changes to the config file
      */
     private _startConfigMonitoring(): void {
+        if (isReadonlyMode()) return;
         this._createFileMonitor();
         this._overrideWriteConfigForMonitoring();
     }

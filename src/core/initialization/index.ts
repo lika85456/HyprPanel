@@ -11,6 +11,7 @@ import { SettingsDialogLoader } from 'src/components/settings/lazyLoader';
 import options from 'src/configuration';
 import { initializeSystemBehaviors } from 'src/core/behaviors';
 import { JSXElement } from 'src/core/types';
+import { isReadonlyMode } from 'src/lib/session';
 import { Timer } from 'src/lib/performance/timer';
 import { BarRefreshManager } from 'src/services/display/bar/refreshManager';
 
@@ -92,6 +93,7 @@ export class InitializationService {
      * Sets up monitor change event handlers
      */
     private static _setupMonitorHandlers(): void {
+        if (isReadonlyMode()) return;
         const hyprland = AstalHyprland.get_default();
         const barRefreshManager = BarRefreshManager.getInstance();
 
