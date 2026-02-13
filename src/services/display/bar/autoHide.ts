@@ -132,6 +132,7 @@ export class BarAutoHideService {
         const activeWorkspaces = monitors.map((monitor) => monitor.active_workspace);
 
         activeWorkspaces.forEach((workspace) => {
+            if (!workspace?.monitor?.id) return;
             const hasOneClient = workspace.get_clients().length !== 1;
             this._setBarVisibility(workspace.monitor.id, hasOneClient);
         });
@@ -144,6 +145,7 @@ export class BarAutoHideService {
         const monitors = this._hyprlandService.get_monitors();
 
         monitors.forEach((monitor) => {
+            if (monitor?.id === undefined) return;
             if (BarVisibility.get(`bar-${monitor.id}`)) {
                 this._setBarVisibility(monitor.id, true);
             }
@@ -155,6 +157,7 @@ export class BarAutoHideService {
      */
     private _updateBarVisibilityByFullscreen(): void {
         this._hyprlandService.get_workspaces().forEach((workspace) => {
+            if (!workspace?.monitor?.id) return;
             this._setBarVisibility(workspace.monitor.id, !workspace.hasFullscreen);
         });
     }

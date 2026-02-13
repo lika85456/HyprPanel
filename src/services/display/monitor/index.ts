@@ -1,5 +1,6 @@
 import { Gdk } from 'astal/gtk3';
 import AstalHyprland from 'gi://AstalHyprland?version=0.1';
+import { isReadonlyMode } from 'src/lib/session';
 
 const hyprlandService = AstalHyprland.get_default();
 
@@ -44,6 +45,8 @@ export class GdkMonitorService {
      * @returns The corresponding Hyprland monitor id.
      */
     public mapGdkToHyprland(monitor: number): number {
+        if (isReadonlyMode()) return monitor;
+
         const monitorMappings = this.getMonitorMappings();
 
         for (const monitorMapping of monitorMappings) {
@@ -85,6 +88,8 @@ export class GdkMonitorService {
      * @returns The corresponding GDK monitor id.
      */
     public mapHyprlandToGdk(monitor: number): number {
+        if (isReadonlyMode()) return monitor;
+
         const monitorMappings = this.getMonitorMappings();
 
         for (var monitorMapping of monitorMappings) {
