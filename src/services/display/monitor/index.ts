@@ -128,6 +128,13 @@ export class GdkMonitorService {
         const display = Gdk.Display.get_default();
         const monitorCount = display.get_n_monitors();
 
+        if (isReadonlyMode()) {
+            const mappings: MonitorMapping[] = [];
+            for (let i = 0; i < monitorCount; i++) {
+                mappings.push({ gdkIndex: i, hyprlandId: i });
+            }
+            return mappings;
+        }
 
         const x : IHash = {};
 

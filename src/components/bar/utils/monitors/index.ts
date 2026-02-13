@@ -1,6 +1,7 @@
 import { Gdk } from 'astal/gtk3';
 import { BarLayout, BarLayouts } from 'src/lib/options/types';
 import { GdkMonitorService } from 'src/services/display/monitor';
+import { isReadonlyMode } from 'src/lib/session';
 import { MonitorMapping } from './types';
 import { JSXElement } from 'src/core/types';
 import AstalHyprland from 'gi://AstalHyprland?version=0.1';
@@ -65,6 +66,26 @@ export const getLayoutForMonitor = (monitor: number, layouts: BarLayouts): BarLa
 };
 
 const _getResolveLayoutForMonitor = (monitor: number, layouts: BarLayouts): [string, BarLayout] => {
+    const matchingNum = Object.keys(layouts).find((key) => key === monitor.toString());
+    if (matchingNum !== undefined) {
+        return [matchingNum, layouts[matchingNum]];
+    }
+
+    if (isReadonlyMode()) {
+        const wildcard = Object.keys(layouts).find((key) => key === '*');
+        if (wildcard) {
+            return [wildcard, layouts[wildcard]];
+        }
+        return [
+            'default',
+            {
+                left: ['dashboard', 'workspaces', 'windowtitle'],
+                middle: ['media'],
+                right: ['volume', 'network', 'bluetooth', 'battery', 'systray', 'clock', 'notifications'],
+            },
+        ];
+    }
+
     const hyprlandService = AstalHyprland.get_default();
     const mon = hyprlandService.get_monitor(monitor);
     if (!mon) {
@@ -83,11 +104,6 @@ const _getResolveLayoutForMonitor = (monitor: number, layouts: BarLayouts): [str
     const matchingConn = Object.keys(layouts).find((key) => key === monitorConn);
     if (matchingConn !== undefined) {
         return [matchingConn, layouts[matchingConn]];
-    }
-
-    const matchingNum = Object.keys(layouts).find((key) => key === monitor.toString());
-    if (matchingNum !== undefined) {
-        return [matchingNum, layouts[matchingNum]];
     }
 
     const wildcard = Object.keys(layouts).find((key) => key === '*');
